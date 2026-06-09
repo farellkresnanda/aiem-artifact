@@ -20,8 +20,6 @@ The performance test uses k6 to compare baseline and AIEM request paths.
 | `k6-tests/test_B_cold.js` | Runs condition B |
 | `k6-tests/test_C_warm.js` | Runs condition C |
 | `k6-tests/run_all.sh` | Runs repeated evaluation sequence |
-| `k6-tests/baseline_warm_test.js` | Additional baseline/warm comparison script |
-| `k6-tests/cold_test.js` | Additional cold-cache test script |
 
 ## Required Environment Variables
 
