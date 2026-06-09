@@ -24,7 +24,7 @@ curl -s -X POST "$KONG/services/svc-b/routes" -d 'name=route-b' -d 'paths[]=/api
 curl -s -X POST "$KONG/services/svc-b-pub/routes" -d 'name=route-b-public' -d 'paths[]=/api/b-public' -d 'strip_path=true' > /dev/null
 curl -s -X POST "$KONG/services/legacy/routes" -d 'name=route-legacy' -d 'paths[]=/api/legacy' -d 'strip_path=true' > /dev/null
 
-echo '=== [4/5] Ekstrak Public Key Keycloak ke PEM ==='
+echo '=== [4/5] Extracting Keycloak public key to PEM ==='
 JWKS=$(curl -s "$KEYCLOAK_JWKS_URL")
 python3 -c "
 import json, base64, sys
