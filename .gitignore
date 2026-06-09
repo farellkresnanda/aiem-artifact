@@ -1,0 +1,35 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Docker/runtime volumes
+postgres_data/
+kong_db_data/
+keycloak_data/
+data/
+volumes/
+
+# Logs and raw outputs
+*.log
+raw-results/
+raw-logs/
+
+# k6 large generated outputs
+performance/results/*.json
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

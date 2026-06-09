@@ -1,0 +1,164 @@
+networks:
+  zero-trust-net:
+    driver: bridge
+
+volumes:
+  keycloak_data:
+  kong_db_data:
+  postgres_data:
+
+services:
+
+  # KEYCLOAK
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_PORT: "8080"
+    command: start-dev
+    ports:
+      - "8080:8080"
+    networks:
+      - zero-trust-net
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && echo OK || echo FAIL'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # POSTGRESQL Database untuk Kong
+  kong-db:
+    image: postgres:13
+    container_name: kong-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_DB: kong
+      POSTGRES_PASSWORD: ${KONG_PG_PASSWORD}
+    networks:
+      - zero-trust-net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "kong"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # KONG MIGRATION
+  kong-migration:
+    image: kong:3.6
+    container_name: kong-migration
+    command: kong migrations bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD}
+      KONG_PG_DATABASE: kong
+    networks:
+      - zero-trust-net
+    depends_on:
+      kong-db:
+        condition: service_healthy
+    restart: on-failure
+
+  # KONG GATEWAY
+  kong:
+    image: kong:3.6
+    container_name: kong
+    restart: unless-stopped
+    environment:
+      KONG_DNS_RESOLVER: "127.0.0.11"
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-db
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD}
+      KONG_PG_DATABASE: kong
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+      KONG_PLUGINS: bundled
+      KONG_LOG_LEVEL: notice
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    networks:
+      - zero-trust-net
+    depends_on:
+      kong-db:
+        condition: service_healthy
+      kong-migration:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # SERVICE A
+  service-a:
+    build: ./services/service-a
+    container_name: service-a
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_TOKEN_URL: http://keycloak:8080/realms/zero-trust/protocol/openid-connect/token
+      CLIENT_ID: service-a
+      CLIENT_SECRET: ${SERVICE_A_CLIENT_SECRET}
+      SERVICE_B_URL: http://service-b:5001
+      ENABLE_SIMULATED_SECRET_LEAK: ${ENABLE_SIMULATED_SECRET_LEAK:-false}
+    networks:
+      - zero-trust-net
+    depends_on:
+      kong:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # SERVICE B
+  service-b:
+    build: ./services/service-b
+    container_name: service-b
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs
+    networks:
+      - zero-trust-net
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # LEGACY SERVICE
+  legacy-service:
+    build: ./services/legacy-service
+    container_name: legacy-service
+    restart: unless-stopped
+    networks:
+      - zero-trust-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
