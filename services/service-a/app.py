@@ -15,7 +15,7 @@ def get_m2m_token():
     if not CLIENT_SECRET:
         raise RuntimeError("CLIENT_SECRET environment variable is required")
     now = time.time()
-    # DISABLE_M2M_CACHE=true → skip cache, always fetch (untuk cold test)
+    # DISABLE_M2M_CACHE=true → skip cache and always fetch a fresh token for cold-cache testing
     if os.getenv('DISABLE_M2M_CACHE', 'false') != 'true':
         if _m2m_cache['token'] and _m2m_cache['expires_at'] > now + 30:
             return _m2m_cache['token']
@@ -34,7 +34,7 @@ def get_m2m_token():
 def health():
     return jsonify({'status': 'ok', 'service': 'entry-point-a'})
 
-# BASELINE: Panggil Service B TANPA M2M token (simulasi tanpa AIEM)
+# BASELINE: Call Service B without an M2M token to simulate the non-AIEM path
 @app.route('/api/fetch-employee/<int:emp_id>')
 def fetch_traditional(emp_id):
     resp = http_req.get(f'{SERVICE_B_URL}/internal/employees/{emp_id}', timeout=5)
@@ -42,7 +42,7 @@ def fetch_traditional(emp_id):
                     'http_status': resp.status_code,
                     'data': resp.json()})
 
-# ZERO TRUST: Panggil Service B DENGAN M2M token
+# AIEM: Call Service B with an M2M token
 @app.route('/api/fetch-employee-secure/<int:emp_id>')
 def fetch_secure(emp_id):
     token = get_m2m_token()
@@ -65,7 +65,7 @@ def ssrf_simulate():
     except Exception as e:
         return jsonify({'ssrf_target': target, 'error': str(e)}), 502
 
-# CREDENTIAL EXPOSURE: Simulasi RCE/LFI (untuk Skenario S7)
+# CREDENTIAL EXPOSURE: Simulated RCE/LFI endpoint for scenario S7
 @app.route('/api/debug/env')
 def debug_env():
     if os.getenv('ENABLE_SIMULATED_SECRET_LEAK', 'false') != 'true':

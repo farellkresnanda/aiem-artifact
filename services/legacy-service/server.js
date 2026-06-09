@@ -8,7 +8,7 @@ const users = [
     { id: 99, name: 'Admin', role: 'admin', simulated_secret: 'SIMULATED-LEGACY-SECRET' }
 ];
 
-// OWASP API1: BOLA — tidak ada cek apakah user berhak akses ID ini
+// OWASP API1: BOLA — no ownership or authorization check for the requested user ID
 app.get('/profile/:id', (req, res) => {
     const user = users.find(u => u.id === parseInt(req.params.id));
     if (user) return res.json(user);

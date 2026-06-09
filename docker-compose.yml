@@ -34,7 +34,7 @@ services:
       retries: 10
       start_period: 60s
 
-  # POSTGRESQL Database untuk Kong
+  # PostgreSQL database for Kong
   kong-db:
     image: postgres:13
     container_name: kong-db

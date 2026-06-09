@@ -5,20 +5,20 @@ KONG="${KONG_ADMIN_URL:-http://localhost:8001}"
 KEYCLOAK_ISSUER="${KEYCLOAK_ISSUER:-http://localhost:8080/realms/zero-trust}"
 KEYCLOAK_JWKS_URL="${KEYCLOAK_JWKS_URL:-${KEYCLOAK_ISSUER}/protocol/openid-connect/certs}"
 
-echo '=== [1/5] Membersihkan konfigurasi Kong lama ==='
+echo '=== [1/5] Clearing existing Kong configuration ==='
 for t in plugins consumers routes services; do
   for id in $(curl -s "$KONG/$t" | python3 -c "import sys,json;[print(x['id']) for x in json.load(sys.stdin).get('data',[])]" 2>/dev/null); do
     curl -s -X DELETE "$KONG/$t/$id" > /dev/null
   done
 done
 
-echo '=== [2/5] Mendaftarkan Kong Services ==='
+echo '=== [2/5] Registering Kong services ==='
 curl -s -X POST "$KONG/services" -d 'name=svc-a' -d 'url=http://service-a:5000' > /dev/null
 curl -s -X POST "$KONG/services" -d 'name=svc-b' -d 'url=http://service-b:5001' > /dev/null
 curl -s -X POST "$KONG/services" -d 'name=svc-b-pub' -d 'url=http://service-b:5001' > /dev/null
 curl -s -X POST "$KONG/services" -d 'name=legacy' -d 'url=http://legacy-service:3000' > /dev/null
 
-echo '=== [3/5] Mendaftarkan Kong Routes ==='
+echo '=== [3/5] Registering Kong routes ==='
 curl -s -X POST "$KONG/services/svc-a/routes" -d 'name=route-a' -d 'paths[]=/api/a' -d 'strip_path=true' > /dev/null
 curl -s -X POST "$KONG/services/svc-b/routes" -d 'name=route-b' -d 'paths[]=/api/b' -d 'strip_path=true' > /dev/null
 curl -s -X POST "$KONG/services/svc-b-pub/routes" -d 'name=route-b-public' -d 'paths[]=/api/b-public' -d 'strip_path=true' > /dev/null
@@ -40,7 +40,7 @@ pk = RSAPublicNumbers(b64(k['e']), b64(k['n'])).public_key()
 open('/tmp/kc.pem', 'w').write(pk.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo).decode())
 " "$JWKS"
 
-echo '=== [5/5] Daftarkan JWT Plugin ke Semua Route ==='
+echo '=== [5/5] Registering JWT plugin on all services ==='
 curl -s -X POST "$KONG/consumers" -d 'username=keycloak' > /dev/null
 curl -s -X POST "$KONG/consumers/keycloak/jwt" -F 'algorithm=RS256' -F "key=$KEYCLOAK_ISSUER" -F 'rsa_public_key=</tmp/kc.pem' > /dev/null
 
@@ -51,6 +51,6 @@ done
 curl -s -X POST "$KONG/plugins" -d 'name=rate-limiting' -d 'config.minute=120' > /dev/null
 
 echo ''
-echo '=== SETUP KONG SELESAI ==='
-echo 'Route terdaftar:'
+echo '=== KONG SETUP COMPLETED ==='
+echo 'Registered routes:'
 curl -s "$KONG/routes" | python3 -c "import sys,json;[print(f\"  {r['name']}: {r['paths']}\") for r in json.load(sys.stdin)['data']]"
