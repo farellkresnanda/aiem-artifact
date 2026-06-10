@@ -22,9 +22,19 @@ The artifact implements an Application-Identity Enforcement Model (AIEM) for mic
 │   ├── service-b/
 │   └── legacy-service/
 ├── k6-tests/
-├── performance/
-│   └── results/
+│   ├── run_all.sh
+│   ├── test_A_baseline.js
+│   ├── test_B_cold.js
+│   └── test_C_warm.js
+├── postman/
+│   ├── aiem-security-tests.postman_collection.json
+│   └── aiem.postman_environment.example.json
 └── docs/
+    ├── reproduction-guide.md
+    ├── security-evaluation.md
+    ├── performance-evaluation.md
+    └── evidence/
+        └── security-testing-summary.md
 ```
 
 ## Main Components
