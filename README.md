@@ -16,6 +16,7 @@ The artifact implements an Application-Identity Enforcement Model (AIEM) for mic
 │   └── keycloak/
 │       └── realm-export-sanitized.json
 ├── scripts/
+│   ├── setup-keycloak.sh
 │   └── setup-kong.sh
 ├── services/
 │   ├── service-a/
@@ -53,6 +54,7 @@ The artifact implements an Application-Identity Enforcement Model (AIEM) for mic
 - jq
 - k6
 - Python 3
+- Python cryptography package, for example `python3-cryptography` on Ubuntu
 
 ## Environment Setup
 
@@ -62,7 +64,7 @@ Copy the example environment file:
 cp .env.example .env
 ```
 
-Then edit `.env` and replace placeholder values with local lab values.
+The default values in `.env.example` are sufficient for local reproduction. The `scripts/setup-keycloak.sh` script applies the local Service A client secret and test-user password from `.env` to the imported Keycloak realm. You may change these values, but keep `.env` and Keycloak aligned by rerunning the setup script.
 
 Important variables:
 
@@ -83,9 +85,10 @@ Do not commit `.env`.
 docker compose --env-file .env up -d --build
 ```
 
-After Keycloak is ready, configure Kong:
+After Keycloak is ready, apply the local Keycloak settings and configure Kong:
 
 ```bash
+./scripts/setup-keycloak.sh
 ./scripts/setup-kong.sh
 ```
 

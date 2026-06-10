@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+python3 -c 'import cryptography' >/dev/null 2>&1 || {
+  echo "ERROR: Python cryptography package is required." >&2
+  echo "On Ubuntu, install it with: sudo apt install python3-cryptography" >&2
+  exit 1
+}
+
 KONG="${KONG_ADMIN_URL:-http://localhost:8001}"
 KEYCLOAK_ISSUER="${KEYCLOAK_ISSUER:-http://localhost:8080/realms/zero-trust}"
 KEYCLOAK_JWKS_URL="${KEYCLOAK_JWKS_URL:-${KEYCLOAK_ISSUER}/protocol/openid-connect/certs}"

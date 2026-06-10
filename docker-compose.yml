@@ -20,13 +20,14 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_PORT: "8080"
-    command: start-dev
+    command: start-dev --import-realm
     ports:
       - "8080:8080"
     networks:
       - zero-trust-net
     volumes:
       - keycloak_data:/opt/keycloak/data
+      - ./configs/keycloak/realm-export-sanitized.json:/opt/keycloak/data/import/realm-export-sanitized.json:ro
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && echo OK || echo FAIL'"]
       interval: 10s
@@ -124,7 +125,7 @@ services:
       keycloak:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen(\'http://localhost:5000/health\', timeout=5)\""]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -143,7 +144,7 @@ services:
       keycloak:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen(\'http://localhost:5001/health\', timeout=5)\""]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -157,7 +158,7 @@ services:
     networks:
       - zero-trust-net
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      test: ["CMD-SHELL", "node -e \"fetch(\'http://localhost:3000/health\').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 15s
       timeout: 5s
       retries: 5

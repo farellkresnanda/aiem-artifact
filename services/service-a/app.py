@@ -40,7 +40,7 @@ def fetch_traditional(emp_id):
     resp = http_req.get(f'{SERVICE_B_URL}/internal/employees/{emp_id}', timeout=5)
     return jsonify({'mode': 'TRADITIONAL_NO_M2M',
                     'http_status': resp.status_code,
-                    'data': resp.json()})
+                    'data': resp.json()}), resp.status_code
 
 # AIEM: Call Service B with an M2M token
 @app.route('/api/fetch-employee-secure/<int:emp_id>')
@@ -50,7 +50,7 @@ def fetch_secure(emp_id):
                         headers={'Authorization': f'Bearer {token}'}, timeout=5)
     return jsonify({'mode': 'ZERO_TRUST_M2M',
                     'http_status': resp.status_code,
-                    'data': resp.json()})
+                    'data': resp.json()}), resp.status_code
 
 # SSRF SIMULATION: Attacker-controlled target URL (CWE-918)
 @app.route('/api/internal-fetch')

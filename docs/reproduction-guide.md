@@ -10,7 +10,7 @@ Copy the example environment file:
 cp .env.example .env
 ```
 
-Edit `.env` and replace placeholder values with local values.
+The default values in `.env.example` are sufficient for local reproduction. You may change them, but keep `.env` and Keycloak aligned by rerunning `scripts/setup-keycloak.sh`.
 
 Required variables:
 
@@ -58,11 +58,17 @@ The sanitized Keycloak realm export is located at:
 configs/keycloak/realm-export-sanitized.json
 ```
 
-The export is sanitized and does not include client secrets or user credentials. Local client secrets and test users must be configured manually or regenerated in Keycloak.
+The realm is imported automatically when Keycloak starts. The export is sanitized and does not include client secrets or user credentials.
+
+After Keycloak is running, apply the local Service A client secret and test-user password from `.env`:
+
+```bash
+./scripts/setup-keycloak.sh
+```
 
 ## 4. Kong Configuration
 
-After Keycloak is running, configure Kong:
+After Keycloak has been configured, configure Kong:
 
 ```bash
 ./scripts/setup-kong.sh
