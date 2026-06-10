@@ -33,3 +33,10 @@ performance/results/*.json
 Thumbs.db
 .vscode/
 .idea/
+
+# Postman local/sensitive exports
+postman/*environment.json
+!postman/*environment.example.json
+postman/*local.postman_environment.json
+postman/*secret*
+postman/*token*

@@ -1,0 +1,851 @@
+{
+  "info": {
+    "name": "AIEM Security Tests",
+    "description": "Sanitized Postman collection for reproducing AIEM security evaluation requests. Raw JWTs, passwords, and client secrets are not included. Use the accompanying aiem.postman_environment.example.json as a template and fill values locally.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00. Setup & Token",
+      "item": [
+        {
+          "name": "T1. Get User Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('token endpoint responded with 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('user_token', json.access_token);",
+                  "console.log('user_token refreshed');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id_user}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{token_endpoint}}",
+              "host": [
+                "{{token_endpoint}}"
+              ]
+            },
+            "description": "Fetches a user access token and stores it in {{user_token}}."
+          }
+        },
+        {
+          "name": "T2. Get M2M Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('token endpoint responded with 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('m2m_token', json.access_token);",
+                  "console.log('m2m_token refreshed');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id_m2m}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret_m2m}}",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{scope_public}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{token_endpoint}}",
+              "host": [
+                "{{token_endpoint}}"
+              ]
+            },
+            "description": "Fetches an M2M access token and stores it in {{m2m_token}}."
+          }
+        }
+      ]
+    },
+    {
+      "name": "01. JWT Attacks",
+      "item": [
+        {
+          "name": "J1. Algorithm None Attack",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{j1_alg_none_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/fetch-employee/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "fetch-employee",
+                "1"
+              ]
+            },
+            "description": "Expected result: gateway rejects malformed alg=none token."
+          }
+        },
+        {
+          "name": "J2. RS256 to HS256 Confusion",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{j2_alg_confusion_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/fetch-employee/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "fetch-employee",
+                "1"
+              ]
+            },
+            "description": "Expected result: gateway rejects algorithm-confusion token."
+          }
+        },
+        {
+          "name": "J3. Claim Tampering",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{j3_claim_tampered_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/fetch-employee/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "fetch-employee",
+                "1"
+              ]
+            },
+            "description": "Expected result: gateway rejects tampered claim token."
+          }
+        },
+        {
+          "name": "J4. Expired Token Replay Attack",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{j4_expired_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/fetch-employee/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "fetch-employee",
+                "1"
+              ]
+            },
+            "description": "Expected result: gateway rejects expired token."
+          }
+        },
+        {
+          "name": "J5. Invalid Signature",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{j5_invalid_signature_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/fetch-employee/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "fetch-employee",
+                "1"
+              ]
+            },
+            "description": "Expected result: gateway rejects invalid-signature token."
+          }
+        },
+        {
+          "name": "J6. Audience Mismatch",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{j6_audience_mismatch_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "1"
+              ]
+            },
+            "description": "Expected result: Service B inline PDP rejects token with invalid audience."
+          }
+        },
+        {
+          "name": "J7. azp Mismatch",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{j7_azp_mismatch_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "1"
+              ]
+            },
+            "description": "Expected result: Service B inline PDP rejects token with invalid authorized party."
+          }
+        },
+        {
+          "name": "J8. Insufficient Scope",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{j8_insufficient_scope_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/99",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "99"
+              ]
+            },
+            "description": "Expected result: Service B scope enforcement rejects insufficient scope."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Security Scenarios",
+      "item": [
+        {
+          "name": "S1. SSRF Lateral Movement Baseline",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/internal-fetch?target=service-b:5001&emp_id=99",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "internal-fetch?target=service-b:5001&emp_id=99"
+              ]
+            },
+            "description": "Expected result: baseline internal fetch reaches Service B internal endpoint."
+          }
+        },
+        {
+          "name": "S2. Defense-in-Depth: User Token to Service B",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "1"
+              ]
+            },
+            "description": "Expected result: Service B rejects user token on secure M2M endpoint."
+          }
+        },
+        {
+          "name": "S3a. M2M BOLA Prevention - Executive",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/fetch-employee-secure/99",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "fetch-employee-secure",
+                "99"
+              ]
+            },
+            "description": "Expected result: Service B blocks executive data access through scope enforcement."
+          }
+        },
+        {
+          "name": "S3b. M2M BOLA - Staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/fetch-employee-secure/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "fetch-employee-secure",
+                "1"
+              ]
+            },
+            "description": "Expected result: staff data request succeeds with masked response."
+          }
+        },
+        {
+          "name": "S4a. Token Type: User Token to Public Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b-public/public/employees/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b-public",
+                "public",
+                "employees",
+                "1"
+              ]
+            },
+            "description": "Expected result: public endpoint accepts user token."
+          }
+        },
+        {
+          "name": "S4b. Token Type: M2M Token to Public Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{m2m_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b-public/public/employees/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b-public",
+                "public",
+                "employees",
+                "1"
+              ]
+            },
+            "description": "Expected result: public endpoint rejects M2M token."
+          }
+        },
+        {
+          "name": "S5a. Legacy BOLA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/legacy/profile/99",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "legacy",
+                "profile",
+                "99"
+              ]
+            },
+            "description": "Expected result: legacy baseline exposes unauthorized object access."
+          }
+        },
+        {
+          "name": "S5b. Secure Service B",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{m2m_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/99",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "99"
+              ]
+            },
+            "description": "Expected result: secure Service B blocks executive data access."
+          }
+        },
+        {
+          "name": "S6. No Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "1"
+              ]
+            },
+            "description": "Expected result: gateway rejects request without token."
+          }
+        },
+        {
+          "name": "S6b. Fake Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{fake_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "1"
+              ]
+            },
+            "description": "Expected result: gateway rejects fake token."
+          }
+        },
+        {
+          "name": "S7a. Steal CLIENT_SECRET",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/a/api/debug/env",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "a",
+                "api",
+                "debug",
+                "env"
+              ]
+            },
+            "description": "Expected result: disabled by default unless ENABLE_SIMULATED_SECRET_LEAK=true."
+          }
+        },
+        {
+          "name": "S7b. Create Token with Stolen Credential",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('token endpoint responded with 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('stolen_token', json.access_token);",
+                  "console.log('stolen_token refreshed');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id_m2m}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret_m2m}}",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{scope_public}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{token_endpoint}}",
+              "host": [
+                "{{token_endpoint}}"
+              ]
+            },
+            "description": "Uses local client credentials to simulate a stolen-credential token request."
+          }
+        },
+        {
+          "name": "S7c. Access Staff with Stolen Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{stolen_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "1"
+              ]
+            },
+            "description": "Expected result: staff data can be accessed with valid stolen M2M token."
+          }
+        },
+        {
+          "name": "S7d. Access Executive with Stolen Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{stolen_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/b/secure/employees/99",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "b",
+                "secure",
+                "employees",
+                "99"
+              ]
+            },
+            "description": "Expected result: executive data remains blocked by scope enforcement."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": ""
+    },
+    {
+      "key": "token_endpoint",
+      "value": ""
+    },
+    {
+      "key": "client_id_user",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "client_id_m2m",
+      "value": ""
+    },
+    {
+      "key": "client_secret_m2m",
+      "value": ""
+    },
+    {
+      "key": "scope_public",
+      "value": ""
+    },
+    {
+      "key": "user_token",
+      "value": ""
+    },
+    {
+      "key": "m2m_token",
+      "value": ""
+    },
+    {
+      "key": "stolen_token",
+      "value": ""
+    },
+    {
+      "key": "fake_token",
+      "value": "fake.invalid.token"
+    },
+    {
+      "key": "j1_alg_none_token",
+      "value": ""
+    },
+    {
+      "key": "j2_alg_confusion_token",
+      "value": ""
+    },
+    {
+      "key": "j3_claim_tampered_token",
+      "value": ""
+    },
+    {
+      "key": "j4_expired_token",
+      "value": ""
+    },
+    {
+      "key": "j5_invalid_signature_token",
+      "value": ""
+    },
+    {
+      "key": "j6_audience_mismatch_token",
+      "value": ""
+    },
+    {
+      "key": "j7_azp_mismatch_token",
+      "value": ""
+    },
+    {
+      "key": "j8_insufficient_scope_token",
+      "value": ""
+    }
+  ]
+}
