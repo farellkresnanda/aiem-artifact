@@ -43,7 +43,7 @@ The artifact implements an Application-Identity Enforcement Model (AIEM) for mic
 - Kong Gateway: gateway-level JWT validation and routing.
 - Service A: entry-point service that obtains M2M tokens from Keycloak.
 - Service B: downstream service with inline PDP validation for `aud`, `azp`, and `scope`.
-- Legacy Service: intentionally vulnerable baseline service used for comparison.
+- Legacy Service: brownfield baseline service that relies on gateway-level validation without resource-layer authorization checks.
 
 ## Requirements
 
@@ -124,7 +124,7 @@ Large generated JSON outputs are ignored by Git by default.
 
 ## Safety Notes
 
-This artifact contains intentionally vulnerable endpoints for controlled research evaluation, especially the baseline legacy service and the simulated credential exposure endpoint in Service A.
+This artifact contains controlled baseline and simulation endpoints for research evaluation, including a brownfield legacy baseline and a disabled-by-default simulated credential exposure endpoint in Service A.
 
 The simulated secret leak endpoint is disabled by default. It should only be enabled when reproducing scenario S7:
 

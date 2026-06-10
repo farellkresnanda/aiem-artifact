@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-// Intentionally vulnerable baseline dataset for security evaluation only
+// Brownfield baseline dataset for security evaluation only
 const users = [
     { id: 1,  name: 'Alice', role: 'user',  sensitive_id: 'SIMULATED-USER-ID' },
     { id: 99, name: 'Admin', role: 'admin', simulated_secret: 'SIMULATED-LEGACY-SECRET' }

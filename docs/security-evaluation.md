@@ -51,7 +51,7 @@ AIEM uses a Minimum Viable Claims Set (MVCS) to separate gateway-level and resou
 
 ## Important Safety Note
 
-Some endpoints are intentionally vulnerable because they are used to reproduce controlled research scenarios.
+Some endpoints are included as controlled baseline or simulation endpoints to reproduce the evaluated research scenarios.
 
 The simulated credential exposure endpoint in Service A is disabled by default. Enable it only when reproducing S7:
 
