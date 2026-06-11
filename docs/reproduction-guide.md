@@ -92,11 +92,18 @@ Performance tests are documented in:
 docs/performance-evaluation.md
 ```
 
-Run the performance test set with:
+Run the default five-run evaluation sequence:
 
 ```bash
-source .env
 ./k6-tests/run_all.sh
+```
+
+The runner automatically loads `.env`, executes conditions A, B, and C, performs a 20-second warmup before each Condition C measurement, and waits 120 seconds between complete runs.
+
+For a single-run orchestration smoke test without cooldown:
+
+```bash
+RUN_COUNT=1 COOLDOWN_SECONDS=0 ./k6-tests/run_all.sh
 ```
 
 Generated k6 JSON outputs are stored in:
@@ -104,3 +111,5 @@ Generated k6 JSON outputs are stored in:
 ```text
 performance/results/
 ```
+
+The generated files are ignored by Git because they can be large.

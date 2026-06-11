@@ -110,12 +110,21 @@ Performance evaluation documentation is available in:
 docs/performance-evaluation.md
 ```
 
-Run the k6 test set:
+Run the default evaluation sequence:
 
 ```bash
-source .env
 ./k6-tests/run_all.sh
 ```
+
+The script automatically loads `.env`, performs five runs for conditions A, B, and C, and waits 120 seconds between runs. Before each Condition C measurement, the runner primes the AIEM path and waits 20 seconds to warm the token and JWKS caches.
+
+For a single-run orchestration smoke test without cooldown:
+
+```bash
+RUN_COUNT=1 COOLDOWN_SECONDS=0 ./k6-tests/run_all.sh
+```
+
+During performance testing, the script temporarily raises the Kong rate limit to prevent HTTP 429 responses from contaminating the latency measurements. On completion, interruption, or failure, it restores Service A to normal cached mode and returns the Kong rate limit to its default value.
 
 Generated JSON outputs are stored under:
 
