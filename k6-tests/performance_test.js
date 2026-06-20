@@ -26,7 +26,7 @@ const errorRate = new Rate(errorMetricName);
 
 export const options = {
     stages: [
-        { duration: RAMP_UP, target: 1 },
+        { duration: RAMP_UP, target: MAX_VUS },
         { duration: STEADY, target: MAX_VUS },
         { duration: RAMP_DOWN, target: 0 },
     ],
