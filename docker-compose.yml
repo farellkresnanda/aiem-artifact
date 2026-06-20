@@ -138,6 +138,7 @@ services:
     restart: unless-stopped
     environment:
       KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/zero-trust/protocol/openid-connect/certs
+      AIEM_PDP_MODE: ${AIEM_PDP_MODE:-on}
     networks:
       - zero-trust-net
     depends_on:

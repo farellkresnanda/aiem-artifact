@@ -3,6 +3,10 @@ import requests as http_req, os, jwt, json, time
 
 app = Flask(__name__)
 KEYCLOAK_JWKS_URL = os.getenv('KEYCLOAK_JWKS_URL')
+AIEM_PDP_MODE = os.getenv('AIEM_PDP_MODE', 'on').strip().lower()
+
+def is_pdp_enabled():
+    return AIEM_PDP_MODE not in ('off', 'false', '0', 'disabled')
 
 # JWKS Cache with 300-second TTL (auto-refresh on expiry)
 _jwks_cache = {'keys': None, 'fetched_at': 0}
@@ -79,7 +83,11 @@ def verify_user_token(token):
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'service': 'highly-sensitive-b'})
+    return jsonify({
+        'status': 'ok',
+        'service': 'highly-sensitive-b',
+        'pdp_mode': AIEM_PDP_MODE
+    })
 
 # BASELINE (internal): No token — network perimeter only
 @app.route('/internal/employees/<int:emp_id>')
@@ -99,6 +107,23 @@ def secure_get(emp_id):
             'zt_status': 'REJECTED',
             'layer':     'Service-B-Inline-PDP'
         }), 401
+
+    # Performance baseline mode: keep the same /secure endpoint and M2M request path,
+    # but bypass the resource-level PDP checks. Default mode remains PDP ON.
+    if not is_pdp_enabled():
+        emp = next((e for e in EMPLOYEES if e['id'] == emp_id), None)
+        if not emp:
+            return jsonify({'error': 'not found'}), 404
+
+        if emp['role'] == 'staff':
+            return jsonify({
+                'id':        emp['id'],
+                'name':      emp['name'],
+                'role':      emp['role'],
+                'zt_status': 'PDP_DISABLED_BASELINE'
+            })
+
+        return jsonify({**emp, 'zt_status': 'PDP_DISABLED_BASELINE'})
 
     payload, err = verify_m2m_token(auth.split(' ')[1])
     if err:

@@ -17,16 +17,16 @@ The artifact implements an Application-Identity Enforcement Model (AIEM) for mic
 │       └── realm-export-sanitized.json
 ├── scripts/
 │   ├── setup-keycloak.sh
-│   └── setup-kong.sh
+│   ├── setup-kong.sh
+│   ├── set-performance-mode.sh
+│   └── summarize-k6-results.py
 ├── services/
 │   ├── service-a/
 │   ├── service-b/
 │   └── legacy-service/
 ├── k6-tests/
 │   ├── run_all.sh
-│   ├── test_A_baseline.js
-│   ├── test_B_cold.js
-│   └── test_C_warm.js
+│   └── performance_test.js
 ├── postman/
 │   ├── aiem-security-tests.postman_collection.json
 │   └── aiem.postman_environment.example.json
