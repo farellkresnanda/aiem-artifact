@@ -23,6 +23,7 @@ Condition A is not the legacy-service baseline. It is a same-path baseline desig
 | `k6-tests/performance_test.js` | Parameterized k6 script used by all measured conditions |
 | `k6-tests/run_all.sh` | Orchestrates mode switching, warmup, counterbalanced execution order, JSON output, rate-limit handling, and cleanup |
 | `scripts/set-performance-mode.sh` | Applies `baseline`, `aiem-cold`, `aiem-warm`, or `restore` runtime modes |
+| `scripts/summarize-k6-results.py` | Aggregates raw k6 JSON output into per-run and per-condition summaries |
 
 The previous condition-specific k6 scripts were removed because they used different request paths and could produce non-apple-to-apple comparisons.
 
@@ -82,6 +83,20 @@ The filenames follow this pattern: `k6_<condition>_rep<repetition>_block<block>_
 Examples: `k6_A_rep1_block1_pos1.json`, `k6_B_rep1_block1_pos2.json`, and `k6_C_rep1_block1_pos3.json`.
 
 These generated files are ignored by Git because they can be large.
+
+## Result Aggregation
+
+After a performance run, aggregate the raw k6 JSON files with:
+
+    ./scripts/summarize-k6-results.py
+
+The script reads `performance/results/k6_*.json` and generates:
+
+- `performance/results/per-run-summary.csv`
+- `performance/results/condition-summary.csv`
+- `performance/results/performance-summary.md`
+
+The generated result files are local measurement artifacts and are not committed to Git.
 
 ## Metrics to Use
 

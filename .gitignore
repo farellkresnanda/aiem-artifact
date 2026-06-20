@@ -40,3 +40,6 @@ postman/*environment.json
 postman/*local.postman_environment.json
 postman/*secret*
 postman/*token*
+performance/results/*.csv
+performance/results/*.md
+performance/logs/*.log
