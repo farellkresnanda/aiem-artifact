@@ -17,7 +17,9 @@ The artifact implements an Application-Identity Enforcement Model (AIEM) for mic
 │       └── realm-export-sanitized.json
 ├── scripts/
 │   ├── setup-keycloak.sh
-│   └── setup-kong.sh
+│   ├── setup-kong.sh
+│   ├── set-performance-mode.sh
+│   └── summarize-k6-results.py
 ├── services/
 │   ├── service-a/
 │   ├── service-b/
